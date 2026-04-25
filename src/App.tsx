@@ -136,40 +136,6 @@ export default function App() {
     );
   }
 
-  // If not logged in, show login screen
-  if (!user) {
-    return (
-      <div className="min-h-screen summer-gradient flex items-center justify-center p-6">
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white/90 backdrop-blur-xl p-10 md:p-16 rounded-[3rem] shadow-2xl text-center max-w-md w-full border border-white/50"
-        >
-          <div className="w-20 h-20 bg-sky-100 text-sky-600 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
-            <Sun size={40} className="animate-spin-slow" />
-          </div>
-          <h1 className="text-3xl font-extrabold text-slate-800 tracking-tighter mb-4 uppercase">Summer Trip 2026</h1>
-          <p className="text-slate-500 mb-10 font-medium leading-relaxed">
-            Đăng nhập bằng Google để xem lịch trình biển Đà Nẵng và theo dõi chi tiêu đoàn mọi lúc, mọi nơi.
-          </p>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={login}
-            className="w-full py-4 bg-sky-500 text-white rounded-2xl font-bold shadow-lg shadow-sky-200 flex items-center justify-center gap-3 hover:bg-sky-600 transition-all"
-          >
-            <LogIn size={20} /> Đăng nhập với Google
-          </motion.button>
-          
-          <div className="mt-8 flex items-center gap-2 justify-center text-[10px] text-slate-400 font-bold uppercase tracking-widest">
-            <CheckCircle2 size={12} className="text-emerald-500" />
-            Dữ liệu đồng bộ & không bị mất
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
-
   // Use tripData from Firebase, fallback to local state if needed (though FirebaseProvider handles initial seeding)
   const data = tripData || {
     ...initialData,
@@ -248,12 +214,21 @@ export default function App() {
               {data.tripStatus === 'planning' ? 'Giai đoạn lập kế hoạch' : 
                data.tripStatus === 'ongoing' ? 'Hành trình đang diễn ra' : 'Hành trình đã kết thúc'}
             </span>
-            <button 
-              onClick={logout}
-              className="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl text-xs md:text-sm font-bold border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all"
-            >
-              <LogOut size={16} /> Thoát
-            </button>
+            {user ? (
+              <button 
+                onClick={logout}
+                className="bg-white/20 backdrop-blur-md px-5 py-2 rounded-2xl text-xs md:text-sm font-bold border border-white/30 flex items-center gap-2 hover:bg-white/30 transition-all"
+              >
+                <LogOut size={16} /> Thoát
+              </button>
+            ) : (
+              <button 
+                onClick={login}
+                className="bg-sky-500 text-white px-5 py-2 rounded-2xl text-xs md:text-sm font-bold shadow-lg flex items-center gap-2 hover:bg-sky-600 transition-all"
+              >
+                <LogIn size={16} /> Đăng nhập để lưu
+              </button>
+            )}
           </div>
           
           <div className="mt-8 flex justify-center gap-4">
