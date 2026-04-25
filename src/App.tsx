@@ -41,7 +41,19 @@ import ExpenseTracker from './components/ExpenseTracker';
 import { useFirebase } from './components/FirebaseProvider';
 
 export default function App() {
-  const { user, loading, tripData, login, logout, addExpense, removeExpense, setTripStatus, setAdultCount, resetExpensesToDefault } = useFirebase();
+  const { 
+    user, 
+    loading, 
+    tripData, 
+    login, 
+    logout, 
+    addExpense, 
+    removeExpense, 
+    setTripStatus, 
+    setAdultCount, 
+    resetExpensesToDefault,
+    updateTripData
+  } = useFirebase();
   const [isExpenseOpen, setIsExpenseOpen] = useState(false);
   const [expandedCategory, setExpandedCategory] = useState<number | null>(0);
   const [isExporting, setIsExporting] = useState(false);
@@ -49,6 +61,20 @@ export default function App() {
   
   const itineraryRef = useRef<HTMLDivElement>(null);
   const budgetRef = useRef<HTMLDivElement>(null);
+
+  const [refreshStatus, setRefreshStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+
+  const handleRefresh = async () => {
+    setRefreshStatus('loading');
+    try {
+      await resetExpensesToDefault();
+      setRefreshStatus('success');
+      setTimeout(() => setRefreshStatus('idle'), 2000);
+    } catch (err) {
+      console.error(err);
+      setRefreshStatus('idle');
+    }
+  };
 
   const exportAsImage = useCallback(async () => {
     if (itineraryRef.current === null) return;
@@ -564,14 +590,17 @@ export default function App() {
                       
                       <div className="mb-6">
                         <motion.p 
-                          initial={{ scale: 0.9, opacity: 0 }}
+                          initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
-                          className="text-5xl md:text-6xl font-black text-sky-600 tracking-tighter drop-shadow-lg"
+                          className="text-4xl md:text-5xl font-black text-sky-500 tracking-tighter drop-shadow-[0_4px_12px_rgba(14,165,233,0.3)] leading-tight"
                         >
-                          {data.tripStatus === 'planning' ? data.expenses.totalLabel : `${totalActual.toLocaleString()}đ`}
+                          {data.tripStatus === 'planning' 
+                            ? `${totalBudget.toLocaleString('vi-VN')}đ` 
+                            : `${totalActual.toLocaleString('vi-VN')}đ`}
                         </motion.p>
-                        <p className="text-[12px] font-bold text-slate-400 uppercase mt-2 tracking-widest">
-                          Đoàn {data.adultCount || 8} người lớn • {data.adultCount === 8 ? '6 HN + 2 HCM' : 'Tất cả'}
+                        <p className="text-[13px] font-black text-slate-400 uppercase mt-4 tracking-[0.3em] flex items-center justify-center gap-2">
+                          <Users size={14} className="text-sky-300" />
+                          Đoàn {data.adultCount || 8} người lớn
                         </p>
                       </div>
 
@@ -579,21 +608,29 @@ export default function App() {
                         <motion.button 
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          onClick={async (e) => {
+                          disabled={refreshStatus !== 'idle'}
+                          onClick={(e) => {
                             e.preventDefault();
-                            if(window.confirm("Bạn có muốn nạp lại dữ liệu giá mới nhất (53.2Tr)? Hành động này sẽ xóa các thay đổi thủ công của bạn trên bảng dự toán.")) {
-                              try {
-                                await resetExpensesToDefault();
-                                alert("Đã cập nhật giá mới thành công!");
-                              } catch (err) {
-                                console.error(err);
-                                alert("Có lỗi xảy ra khi cập nhật!");
-                              }
-                            }
+                            handleRefresh();
                           }}
-                          className="px-6 py-3 bg-white text-sky-600 border-2 border-sky-100 text-[10px] font-black uppercase tracking-[0.1em] rounded-2xl hover:border-sky-500 transition-all cursor-pointer flex items-center gap-2 mx-auto shadow-sm"
+                          className={`px-6 py-3 border-2 text-[10px] font-black uppercase tracking-[0.1em] rounded-2xl transition-all cursor-pointer flex items-center gap-2 mx-auto shadow-sm ${
+                            refreshStatus === 'success' 
+                              ? 'bg-emerald-500 text-white border-emerald-500' 
+                              : refreshStatus === 'loading'
+                              ? 'bg-slate-100 text-slate-400 border-slate-200 animate-pulse'
+                              : 'bg-white text-sky-600 border-sky-100 hover:border-sky-500'
+                          }`}
                         >
-                          <RotateCcw size={14} strokeWidth={3} /> Làm mới bảng giá dự toán
+                          {refreshStatus === 'success' ? (
+                            <>
+                              <CheckCircle2 size={14} strokeWidth={3} /> Đã cập nhật giá mới
+                            </>
+                          ) : (
+                            <>
+                              <RotateCcw size={14} strokeWidth={3} className={refreshStatus === 'loading' ? 'animate-spin' : ''} /> 
+                              {refreshStatus === 'loading' ? 'Đang cập nhật...' : 'Làm mới bảng giá dự toán'}
+                            </>
+                          )}
                         </motion.button>
                       )}
                     </div>
@@ -781,18 +818,7 @@ export default function App() {
       {/* AI Chat Support */}
       <AIChat 
         currentData={data} 
-        onUpdate={async (newData) => {
-          // Sync changes from AI to Firebase
-          // This is a bit complex for a simple partial update, but let's do our best
-          if (newData.title !== data.title || newData.subtitle !== data.subtitle || newData.adultCount !== data.adultCount) {
-             setAdultCount(newData.adultCount || 8);
-             // We'd need a more generic updateTrip for title/subtitle
-          }
-          
-          // For expenses, AIChat currently adds to the list. 
-          // We can compare and add new ones if we really wanted to.
-          // But to fix the lint error, we just need a valid function.
-        }} 
+        onUpdate={updateTripData} 
       />
     </div>
   );

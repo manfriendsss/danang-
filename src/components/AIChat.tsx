@@ -21,7 +21,14 @@ export default function AIChat({ currentData, onUpdate }: AIChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  // Lazy initialize Gemini to avoid crashing if key is missing
+  const getAI = () => {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) {
+      throw new Error('GEMINI_API_KEY is not configured. Please add it to .env.example');
+    }
+    return new GoogleGenAI({ apiKey: key });
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,6 +45,7 @@ export default function AIChat({ currentData, onUpdate }: AIChatProps) {
     setIsLoading(true);
 
     try {
+      const ai = getAI();
       // Create a lightweight version of data to save tokens and prevent truncation
       const promptData = {
         title: currentData.title,
