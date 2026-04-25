@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "Trip": {
+      "title": "Trip",
+      "description": "A travel itinerary and expense tracker",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "summary": {
+          "type": "object",
+          "properties": {
+            "villaCost": { "type": "string" },
+            "foodBudget": { "type": "string" },
+            "totalExpected": { "type": "string" }
+          }
+        },
+        "ownerId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "ownerId"]
+    },
+    "DayPlan": {
+      "title": "Day Plan",
+      "description": "Daily activities and distance",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string" },
+        "title": { "type": "string" },
+        "distance": { "type": "string" },
+        "activities": {
+          "type": "array",
+          "items": { "type": "object" }
+        }
+      }
+    },
+    "ExpenseItem": {
+      "title": "Expense Item",
+      "description": "Planned expense item",
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "amount": { "type": "number" },
+        "note": { "type": "string" }
+      }
+    },
+    "QuickExpense": {
+      "title": "Quick Expense",
+      "description": "Actual spending (thực chi)",
+      "type": "object",
+      "properties": {
+        "description": { "type": "string" },
+        "amount": { "type": "number" },
+        "payer": { "type": "string" },
+        "date": { "type": "string" },
+        "authorId": { "type": "string" }
+      }
+    }
+  },
+  "firestore": {
+    "/trips/{tripId}": {
+      "schema": "Trip",
+      "description": "Root trip document"
+    },
+    "/trips/{tripId}/days/{dayId}": {
+      "schema": "DayPlan",
+      "description": "Daily itinerary"
+    },
+    "/trips/{tripId}/expenses/{expenseId}": {
+      "schema": "ExpenseItem",
+      "description": "Planned expenses"
+    },
+    "/trips/{tripId}/quickExpenses/{quickExpenseId}": {
+      "schema": "QuickExpense",
+      "description": "Actual spending entries"
+    }
+  }
+}
